@@ -1,0 +1,36 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: gcloud-cleanup-orphaned-disks-prd
+  namespace: ops
+spec:
+  schedule: "0 8 * * 2,4"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccount: gcloud-cleanup-orphaned-disks
+          containers:
+          - name: gcloud-cleanup-orphaned-disks-prd
+            image: us.gcr.io/tvg-production/ops/gcloud-cleanup-orphaned-disks:IMAGE_TAG
+            env:
+              - name: ENV
+                value: prd
+              - name: PROJECT
+                value: tvg-production
+            args: 
+              - --slack-token 
+              - 'SLACK_CREDENTIALS_VALUE'
+              - --channel 
+              - 'SLACK_CHANNEL_ID_VALUE'
+              - --project 
+              - $(PROJECT)
+          restartPolicy: Never
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gcloud-cleanup-orphaned-disks
+  namespace: ops
